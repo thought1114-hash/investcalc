@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#090b10">
+<title>InvestCalc</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--fh:'DM Sans',sans-serif;--fb:'Noto Sans JP',sans-serif;--g:#10b981;--r:#ef4444;--w:#f59e0b;--bg:#090b10;--card:rgba(255,255,255,.02);--bdr:rgba(255,255,255,.06)}
+*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);font-family:var(--fb);color:#fff;-webkit-tap-highlight-color:transparent;min-height:100vh}
+.wrap{position:relative;max-width:440px;margin:0 auto;padding:0 16px 60px}
+.hdr{padding:16px 0 4px;display:flex;justify-content:space-between;align-items:center}
+h1{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--g);letter-spacing:-.04em}
+.hdr-r{display:flex;gap:6px;align-items:center}
+select,button{font-family:var(--fb)}
+.sel{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;padding:7px 10px;color:rgba(255,255,255,.6);font-size:12px;font-family:var(--fh);-webkit-appearance:none}
+.ibtn{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;padding:7px 10px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer}
+.sea{padding:4px 0 6px}.sea span{display:inline-block;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15);border-radius:6px;padding:3px 10px;font-size:10px;color:var(--w)}
+/* main button */
+.main-btn{width:100%;padding:16px;border-radius:14px;color:#fff;font-size:15px;font-weight:700;font-family:var(--fh);cursor:pointer;border:none;margin:8px 0 4px;background:linear-gradient(135deg,#059669,#047857);box-shadow:0 4px 20px rgba(16,185,129,.15)}
+.sub-btns{display:flex;gap:6px;margin-bottom:6px}
+.sbtn2{flex:1;padding:10px 4px;border-radius:10px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:var(--card);color:rgba(255,255,255,.45);text-align:center}
+/* panels */
+.panel{padding:8px 0 8px;animation:fu .2s}.pnl{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;margin-bottom:8px}
+.ce{width:100%;min-height:80px;max-height:180px;overflow:auto;padding:12px;background:rgba(255,255,255,.03);border:1.5px solid rgba(16,185,129,.2);border-radius:12px;color:rgba(255,255,255,.6);font-size:11px;line-height:1.6;outline:none;font-family:var(--fb);-webkit-user-select:text;user-select:text}
+.ni{width:90px;padding:7px 8px;background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:7px;color:#fff;font-size:14px;font-family:var(--fh);font-weight:600;text-align:right;outline:none}
+.gbtn{width:100%;margin-top:8px;padding:13px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:11px;color:#fff;font-size:14px;font-weight:700;font-family:var(--fh);cursor:pointer}
+/* hero */
+.hero{border-radius:18px;padding:22px 18px;text-align:center;margin-bottom:12px}
+.hero-pos{background:linear-gradient(135deg,#0f2920,#0a1a14);border:1px solid rgba(16,185,129,.15)}
+.hero-neg{background:linear-gradient(135deg,#291414,#1a0c0c);border:1px solid rgba(239,68,68,.15)}
+.hero-val{font-size:42px;font-weight:800;font-family:var(--fh);letter-spacing:-.03em;margin-top:4px}
+/* checks */
+.checks{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.chk{padding:7px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;font-family:var(--fb);transition:all .15s;border:1.5px solid var(--bdr);background:var(--card);color:rgba(255,255,255,.3)}
+.chk-on{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:var(--g)}
+/* rows */
+.row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.02)}
+.rl{font-size:11px}.rv{font-size:11px;font-weight:600;font-family:var(--fh)}
+.dim{color:rgba(255,255,255,.3)}.bld{color:rgba(255,255,255,.7);font-weight:600;font-size:12px}
+.wrn{color:var(--w)}.pls{color:var(--g)}
+.tag{display:inline-block;background:var(--card);border:1px solid var(--bdr);border-radius:5px;padding:2px 7px;font-size:9px;color:rgba(255,255,255,.25);font-family:var(--fh);margin-right:4px}
+.fade{opacity:.35}
+.err-box{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.12);border-radius:10px;padding:10px 14px;color:#ef4444;font-size:12px;margin-bottom:8px}
+/* overlay / modal */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto}
+.modal{background:#12151c;border:1px solid var(--bdr);border-radius:16px;padding:20px;width:100%;max-width:440px}
+.modal h2{font-family:var(--fh);font-size:16px;font-weight:700;color:#eee;margin-bottom:14px}
+.ml{font-size:10px;color:rgba(255,255,255,.3);margin:8px 0 3px;font-weight:500}
+.mrow{display:flex;gap:5px;margin-bottom:4px;align-items:center}
+.mrow input{padding:7px;background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:6px;color:#fff;font-size:12px;font-family:var(--fh);outline:none}
+.mrow .ml2{flex:1}.mrow .ma{width:80px;text-align:right}
+.mdel{background:none;border:none;color:rgba(239,68,68,.4);font-size:14px;cursor:pointer;padding:2px 6px}
+.madd{background:none;border:1px dashed rgba(255,255,255,.1);border-radius:6px;padding:6px;color:rgba(255,255,255,.25);font-size:11px;cursor:pointer;width:100%;text-align:center;margin:4px 0}
+.acc-block{margin-bottom:16px;padding:12px;background:rgba(255,255,255,.015);border-radius:10px;border-left:3px solid var(--g)}
+.acc-block-t{font-size:13px;font-weight:700;color:#ddd;font-family:var(--fh);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.mpbtn{padding:10px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;flex:1;text-align:center}
+.mpbtn-p{background:linear-gradient(135deg,#27ae60,#1e8449);border:none;color:#fff}
+.mpbtn-s{background:var(--card);border:1px solid var(--bdr);color:rgba(255,255,255,.4)}
+.hidden{display:none}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>InvestCalc</h1>
+    <div class="hdr-r"><select id="moSel" class="sel"></select><button class="ibtn" onclick="openSettings()">⚙</button></div>
+  </div>
+  <div id="seaW" class="sea hidden"><span></span></div>
+  <button class="main-btn" id="pasteBtn" onclick="autoPaste()">📋 ペーストして計算</button>
+  <div class="sub-btns">
+    <button class="sbtn2" onclick="toggleMode('ocr')">📷 写真OCR</button>
+    <button class="sbtn2" onclick="toggleMode('paste')">📝 テキスト貼付</button>
+    <button class="sbtn2" onclick="toggleMode('manual')">✏️ 手入力</button>
+  </div>
+  <div id="errBox" class="hidden"></div>
+  <div id="ocrPanel" class="panel hidden">
+    <p style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px">Zaimのスクショ2枚を選択（残高＋引落予定）</p>
+    <input type="file" id="ocrFile" accept="image/*" multiple style="display:none">
+    <button id="ocrBtn" class="gbtn" style="margin-top:0;background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="$('ocrFile').click()">写真を選択してOCR実行</button>
+    <p style="font-size:9px;color:rgba(255,255,255,.12);margin-top:6px;text-align:center">※初回はOCRモデル(数MB)をダウンロード。公開リンクでは動作しない場合があります。</p>
+  </div>
+  <div id="pastePanel" class="panel hidden">
+    <div id="pasteBox" class="ce" contenteditable="true"></div>
+    <button class="gbtn" onclick="doPasteCalc()">計算する</button>
+  </div>
+  <div id="manualPanel" class="panel hidden"><div class="pnl" id="manualForm"></div></div>
+  <div id="results" class="hidden"></div>
+  <div id="setup" class="hidden" style="padding:20px 0">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:44px;margin-bottom:8px">🚀</div>
+      <h2 style="font-family:var(--fh);font-size:18px;font-weight:800;color:var(--g)">はじめまして！</h2>
+      <p style="font-size:12px;color:rgba(255,255,255,.3);margin-top:4px">まずは口座とカードを設定しましょう</p>
+    </div>
+    <button class="main-btn" onclick="openSettings()" style="margin:0 0 8px">⚙ 口座・カードを設定する</button>
+    <p style="font-size:10px;color:rgba(255,255,255,.15);text-align:center">設定はこの端末にのみ保存されます（外部送信なし）</p>
+  </div>
+  <div id="empty" class="hidden" style="padding:30px 0;text-align:center">
+    <div style="font-size:44px;margin-bottom:10px;opacity:.25">📊</div>
+    <p style="font-size:13px;color:rgba(255,255,255,.25);line-height:1.8">ショートカットを1タップするだけで<br>OCR→計算→結果表示まで自動</p>
+    <div style="margin-top:16px;padding:14px;background:rgba(255,255,255,.02);border-radius:12px;text-align:left">
+      <p style="font-size:11px;color:rgba(255,255,255,.25);margin-bottom:6px;font-weight:600">📱 ショートカットの作り方（5ステップ）</p>
+      <div style="font-size:10px;color:rgba(255,255,255,.18);line-height:1.8">
+        ❶ <b>写真を選択</b>（複数選択ON）<br>
+        ❷ <b>各項目について繰り返す：</b><br>
+        　→ 画像のテキストを認識<br>
+        　→ 変数に追加「ocrText」<br>
+        ❸ <b>テキストを結合</b>（改行区切り）<br>
+        ❹ <b>クリップボードにコピー</b><br>
+        ❺ <b>Safariで表示：</b><br>
+        　<span style="color:rgba(16,185,129,.5);word-break:break-all">[公開リンクURL]?autopaste=1</span>
+      </div>
+      <p style="font-size:9px;color:rgba(255,255,255,.12);margin-top:8px">※「URLを開く」ではなく「Safariで表示」を使ってください</p>
+    </div>
+    <p style="font-size:11px;color:rgba(255,255,255,.2);margin-top:14px">または📋ペースト / ✏️手入力でも使えます</p>
+  </div>
+</div>
+<div id="settingsOv" class="ov hidden" onclick="closeSettings()">
+  <div class="modal" onclick="event.stopPropagation()" id="settingsBody"></div>
+</div>
+<script>
+// ===== DEFAULT DATA (empty - user sets up on first launch) =====
+const DEF={
+  accounts:[],
+  cards:[],
+  mo:new Date().getMonth()+1
+};
+
+let D=JSON.parse(JSON.stringify(DEF));
+function load(){try{const s=localStorage.getItem("ic-v10");if(s)D=JSON.parse(s);}catch{}}
+function save(){try{localStorage.setItem("ic-v10",JSON.stringify(D));}catch{}}
+load();
+
+let parsed=null,rawText="",curMode="idle";
+const $=id=>document.getElementById(id);
+function isConfigured(){return D.accounts.length>0;}
+function showInitView(){
+  if(!isConfigured()){$("setup").classList.remove("hidden");$("empty").classList.add("hidden");$("results").classList.add("hidden");}
+  else{$("setup").classList.add("hidden");$("empty").classList.remove("hidden");$("results").classList.add("hidden");}
+}
+showInitView();
+
+// Month
+const sel=$("moSel");for(let i=1;i<=12;i++){const o=document.createElement("option");o.value=i;o.textContent=i+"月";sel.appendChild(o);}
+sel.value=D.mo;sel.onchange=function(){D.mo=+this.value;save();updateSea();if(parsed)render();};
+function updateSea(){const w=$("seaW");const has=D.accounts.some(a=>(a.sea||[]).some(s=>s.months.includes(D.mo)));if(has){w.classList.remove("hidden");w.querySelector("span").textContent="⚠ "+D.mo+"月 季節加算あり";}else w.classList.add("hidden");}
+updateSea();
+
+function showErr(m){$("errBox").innerHTML=`<div class="err-box">${esc(m)}</div>`;$("errBox").classList.remove("hidden");setTimeout(()=>$("errBox").classList.add("hidden"),5000);}
+function toggleMode(m){curMode=curMode===m?"idle":m;$("ocrPanel").classList.toggle("hidden",curMode!=="ocr");$("pastePanel").classList.toggle("hidden",curMode!=="paste");$("manualPanel").classList.toggle("hidden",curMode!=="manual");if(curMode==="manual")buildManual();}
+function closeAll(){["ocrPanel","pastePanel","manualPanel"].forEach(id=>$(id).classList.add("hidden"));curMode="idle";}
+
+// ===== PARSER =====
+function parseOcr(text){
+  const result={accounts:{},cards:{}};
+  const norm=text.replace(/[·•]/g,"¥").replace(/[^\S\n]+/g," ");
+  const lines=norm.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const getAmt=l=>{const m=l.match(/¥-?\s?([0-9,]+)/);return m?parseInt(m[1].replace(/,/g,""),10):null;};
+  const near=(i,d=3)=>{for(let x=0;x<=d;x++){if(i+x<lines.length){const a=getAmt(lines[i+x]);if(a!==null)return a;}}return null;};
+  // accounts
+  for(let i=0;i<lines.length;i++)for(const acc of D.accounts)if(acc.hint&&lines[i].includes(acc.hint)&&!lines[i].includes("カード")){const a=near(i,2);if(a!==null&&a>0)result.accounts[acc.id]=a;}
+  // cards in 引き落とし section
+  let inH=false;
+  for(let i=0;i<lines.length;i++){
+    if(lines[i].includes("引き落とし")){inH=true;continue;}
+    if(lines[i].includes("残高")&&!lines[i].includes("引")){inH=false;continue;}
+    if(inH)for(const c of D.cards){if(result.cards[c.id])continue;for(const p of(c.pats||[]))if(lines[i].includes(p)){const a=near(i,3);if(a!==null)result.cards[c.id]=a;break;}}
+  }
+  if(!Object.keys(result.cards).length)for(let i=0;i<lines.length;i++)for(const c of D.cards){if(result.cards[c.id])continue;for(const p of(c.pats||[]))if(lines[i].includes(p)){const a=near(i,3);if(a!==null&&a>0)result.cards[c.id]=a;break;}}
+  return result;
+}
+
+// ===== CALC =====
+function calcAcc(acc,bals,crds){
+  const b=bals[acc.id]||0;
+  const ct=(acc.cardIds||[]).reduce((s,k)=>s+(crds[k]||0),0);
+  const fct=(acc.fc||[]).reduce((s,f)=>s+f.a,0);
+  const fit=(acc.fi||[]).reduce((s,f)=>s+f.a,0);
+  const st=(acc.sea||[]).reduce((s,x)=>s+(x.months.includes(D.mo)?x.a:0),0);
+  return{b,ct,fct,fit,st,inv:b-ct-fct+fit-st-(acc.ef||0)};
+}
+const Y=n=>{if(n==null||isNaN(n))return"—";return(n<0?"−":"")+"¥"+Math.abs(Math.floor(n)).toLocaleString();};
+const F=n=>Math.floor(n/10000)*10000;
+
+function doCalc(text){
+  text=(text||"").replace(/<br\s*\/?>/gi,"\n").replace(/<\/div>/gi,"\n").replace(/<[^>]+>/g,"").replace(/\r/g,"\n");
+  if(text.trim().length<5)return false;
+  rawText=text;parsed=parseOcr(text);closeAll();$("errBox").classList.add("hidden");render();return true;
+}
+
+// ===== PASTE =====
+async function autoPaste(){
+  $("pasteBox").innerText="";$("pastePanel").classList.remove("hidden");curMode="paste";$("pasteBox").focus();
+  try{document.execCommand("paste");await new Promise(r=>setTimeout(r,100));const t=extr();if(t.length>20){doCalc(t);return;}}catch{}
+  try{const items=await navigator.clipboard.read();let ft="";for(const item of items){if(item.types.includes("text/html")){const b=await item.getType("text/html");ft=(await b.text()).replace(/<br\s*\/?>/gi,"\n").replace(/<\/[dp]>/gi,"\n").replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ");}else if(item.types.includes("text/plain")){const b=await item.getType("text/plain");ft=await b.text();}}if(ft.length>20){doCalc(ft);return;}}catch{}
+  try{const t=await navigator.clipboard.readText();if(t.length>20){doCalc(t);return;}}catch{}
+  showErr("自動ペーストできませんでした。枠に長押し→ペースト→計算ボタンで入力してください。");
+}
+function extr(){const el=$("pasteBox");let t="";const w=n=>{if(n.nodeType===3)t+=n.textContent;else if(n.nodeName==="BR")t+="\n";else{if((n.nodeName==="DIV"||n.nodeName==="P")&&t&&!t.endsWith("\n"))t+="\n";n.childNodes.forEach(w);}};el.childNodes.forEach(w);return t||el.innerText||"";}
+function doPasteCalc(){if(!doCalc(extr()))showErr("テキストが短すぎます");}
+
+// ===== OCR (Tesseract.js) =====
+$("ocrFile").onchange=async function(e){
+  if(!e.target.files||!e.target.files.length)return;
+  const btn=$("ocrBtn");
+  btn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>OCR処理中...';
+  btn.disabled=true;$("errBox").classList.add("hidden");
+  try{
+    if(!window.Tesseract){
+      await new Promise((r,j)=>{
+        const s=document.createElement("script");
+        s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        s.onload=r;
+        s.onerror=()=>j(new Error("OCRライブラリの読み込みに失敗しました。ローカルHTMLとしてSafariで開いてお試しください。"));
+        document.head.appendChild(s);
+      });
+    }
+    let all="";
+    for(const f of e.target.files){
+      const res=await Tesseract.recognize(f,"jpn");
+      all+=res.data.text+"\n";
+    }
+    doCalc(all);
+  }catch(err){showErr(err.message);}
+  finally{btn.innerHTML="写真を選択してOCR実行";btn.disabled=false;e.target.value="";}
+};
+
+// ===== MANUAL =====
+function buildManual(){
+  let h='<p style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:8px">口座残高</p>';
+  D.accounts.forEach(a=>{h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px"><span style="font-size:12px;color:rgba(255,255,255,.45)">${esc(a.name)}</span><input class="ni" inputmode="numeric" id="m_${a.id}" placeholder="0"></div>`;});
+  h+='<p style="font-size:11px;color:rgba(255,255,255,.3);margin:12px 0 6px">クレカ請求額</p>';
+  D.cards.forEach(c=>{h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px"><span style="font-size:12px;color:rgba(255,255,255,.45)">${esc(c.label)}</span><input class="ni" inputmode="numeric" id="m_${c.id}" placeholder="0"></div>`;});
+  h+='<button class="gbtn" onclick="doManual()">計算する</button>';
+  $("manualForm").innerHTML=h;
+}
+function doManual(){
+  const ac={},cr={};
+  D.accounts.forEach(a=>{ac[a.id]=parseInt(($("m_"+a.id)?.value||"").replace(/\D/g,""))||0;});
+  D.cards.forEach(c=>{cr[c.id]=parseInt(($("m_"+c.id)?.value||"").replace(/\D/g,""))||0;});
+  parsed={accounts:ac,cards:cr};rawText="";closeAll();render();
+}
+
+// ===== SETTINGS =====
+let tmpD;
+function openSettings(){
+  tmpD=JSON.parse(JSON.stringify(D));renderSettings();$("settingsOv").classList.remove("hidden");
+}
+function closeSettings(){$("settingsOv").classList.add("hidden");}
+function saveS(){D=tmpD;save();closeSettings();updateSea();if(parsed)render();else showInitView();}
+function resetS(){if(confirm("全設定をデフォルトに戻しますか？")){D=JSON.parse(JSON.stringify(DEF));save();closeSettings();updateSea();showInitView();}}
+
+function renderSettings(){
+  let h='<h2>⚙ 設定</h2>';
+  // Accounts
+  h+='<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:8px">口座</div>';
+  tmpD.accounts.forEach((a,ai)=>{
+    h+=`<div class="acc-block"><div class="acc-block-t"><span>${esc(a.name)}</span><button class="mdel" onclick="delAcc(${ai})">✕</button></div>`;
+    h+=`<div class="ml">口座名</div><div class="mrow"><input class="ml2" value="${esc(a.name)}" onchange="tmpD.accounts[${ai}].name=this.value"></div>`;
+    h+=`<div class="ml">OCRキーワード</div><div class="mrow"><input class="ml2" value="${esc(a.hint||'')}" onchange="tmpD.accounts[${ai}].hint=this.value" placeholder="例: 調布"></div>`;
+    h+=`<div class="ml">紐づくカード</div>`;
+    tmpD.cards.forEach(c=>{
+      const checked=(a.cardIds||[]).includes(c.id);
+      h+=`<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,.4);margin-bottom:3px;cursor:pointer"><input type="checkbox" ${checked?"checked":""} onchange="toggleCard(${ai},'${c.id}',this.checked)"> ${esc(c.label)}</label>`;
+    });
+    h+=`<div class="ml">固定費</div>`;
+    (a.fc||[]).forEach((f,fi)=>{h+=`<div class="mrow"><input class="ml2" value="${esc(f.l)}" onchange="tmpD.accounts[${ai}].fc[${fi}].l=this.value"><input class="ma" type="number" value="${f.a}" onchange="tmpD.accounts[${ai}].fc[${fi}].a=+this.value||0"><button class="mdel" onclick="tmpD.accounts[${ai}].fc.splice(${fi},1);renderSettings()">✕</button></div>`;});
+    h+=`<button class="madd" onclick="tmpD.accounts[${ai}].fc.push({l:'',a:0});renderSettings()">+ 固定費を追加</button>`;
+    h+=`<div class="ml">固定収入</div>`;
+    (a.fi||[]).forEach((f,fi)=>{h+=`<div class="mrow"><input class="ml2" value="${esc(f.l)}" onchange="tmpD.accounts[${ai}].fi[${fi}].l=this.value"><input class="ma" type="number" value="${f.a}" onchange="tmpD.accounts[${ai}].fi[${fi}].a=+this.value||0"><button class="mdel" onclick="tmpD.accounts[${ai}].fi.splice(${fi},1);renderSettings()">✕</button></div>`;});
+    h+=`<button class="madd" onclick="tmpD.accounts[${ai}].fi.push({l:'',a:0});renderSettings()">+ 固定収入を追加</button>`;
+    h+=`<div class="ml">生活防衛資金</div><div class="mrow"><input class="ma" type="number" value="${a.ef||0}" onchange="tmpD.accounts[${ai}].ef=+this.value||0" style="width:100%"></div>`;
+    h+=`<div class="ml">季節加算</div>`;
+    (a.sea||[]).forEach((s,si)=>{h+=`<div class="mrow"><input class="ml2" value="${esc(s.l)}" onchange="tmpD.accounts[${ai}].sea[${si}].l=this.value"><input class="ma" type="number" value="${s.a}" onchange="tmpD.accounts[${ai}].sea[${si}].a=+this.value||0"><button class="mdel" onclick="tmpD.accounts[${ai}].sea.splice(${si},1);renderSettings()">✕</button></div><div class="mrow"><input class="ml2" value="${(s.months||[]).join(',')}" onchange="tmpD.accounts[${ai}].sea[${si}].months=this.value.split(',').map(Number).filter(Boolean)" placeholder="適用月(カンマ区切り: 1,7)"></div>`;});
+    h+=`<button class="madd" onclick="tmpD.accounts[${ai}].sea.push({l:'',a:0,months:[]});renderSettings()">+ 季節加算を追加</button>`;
+    h+=`<div class="ml">合計に含める（デフォルト）</div><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer"><input type="checkbox" ${a.inTotal?"checked":""} onchange="tmpD.accounts[${ai}].inTotal=this.checked"> 投資可能額の合計に含める</label>`;
+    h+=`</div>`;
+  });
+  h+=`<button class="madd" style="margin-bottom:16px" onclick="addAcc()">+ 口座を追加</button>`;
+
+  // Cards
+  h+='<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);margin:8px 0">クレジットカード</div>';
+  tmpD.cards.forEach((c,ci)=>{
+    h+=`<div class="mrow" style="margin-bottom:6px"><input class="ml2" value="${esc(c.label)}" onchange="tmpD.cards[${ci}].label=this.value" placeholder="カード名"><input class="ml2" value="${(c.pats||[]).join(',')}" onchange="tmpD.cards[${ci}].pats=this.value.split(',').map(s=>s.trim()).filter(Boolean)" placeholder="OCRキーワード(カンマ区切り)" style="font-size:10px"><button class="mdel" onclick="delCard(${ci})">✕</button></div>`;
+  });
+  h+=`<button class="madd" onclick="addCard()">+ カードを追加</button>`;
+
+  h+=`<div style="display:flex;gap:8px;margin-top:16px"><button class="mpbtn mpbtn-s" onclick="closeSettings()">キャンセル</button><button class="mpbtn mpbtn-p" onclick="saveS()">保存</button></div>`;
+  h+=`<button style="width:100%;margin-top:10px;padding:9px;background:none;border:1px solid rgba(239,68,68,.12);border-radius:8px;color:rgba(239,68,68,.4);font-size:11px;cursor:pointer" onclick="resetS()">全設定をデフォルトに戻す</button>`;
+  $("settingsBody").innerHTML=h;
+}
+function toggleCard(ai,cid,checked){const ids=tmpD.accounts[ai].cardIds||[];if(checked&&!ids.includes(cid))ids.push(cid);else tmpD.accounts[ai].cardIds=ids.filter(x=>x!==cid);renderSettings();}
+function addAcc(){const id="acc_"+Date.now();tmpD.accounts.push({id,name:"新しい口座",hint:"",cardIds:[],fc:[],fi:[],ef:0,sea:[],inTotal:true});renderSettings();}
+function delAcc(i){if(confirm(tmpD.accounts[i].name+"を削除しますか？")){tmpD.accounts.splice(i,1);renderSettings();}}
+function addCard(){const id="card_"+Date.now();tmpD.cards.push({id,label:"新しいカード",pats:[]});renderSettings();}
+function delCard(i){const cid=tmpD.cards[i].id;tmpD.accounts.forEach(a=>a.cardIds=(a.cardIds||[]).filter(x=>x!==cid));tmpD.cards.splice(i,1);renderSettings();}
+
+// ===== RENDER =====
+function render(){
+  if(!parsed){$("results").classList.add("hidden");$("setup").classList.add("hidden");if(isConfigured())$("empty").classList.remove("hidden");else $("setup").classList.remove("hidden");return;}
+  $("empty").classList.add("hidden");$("setup").classList.add("hidden");
+  const bals=parsed.accounts||{},crds=parsed.cards||{};
+  const cs=D.accounts.map(a=>({a,c:calcAcc(a,bals,crds)}));
+  const tot=cs.filter(({a})=>a.inTotal).reduce((s,{c})=>s+F(c.inv),0);
+  const pos=tot>=0;
+  let h=`<div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap"><span class="tag">口座 ${Object.keys(bals).length}/${D.accounts.length}</span><span class="tag">カード ${Object.keys(crds).length}/${D.cards.length}</span></div>`;
+  h+=`<div class="hero ${pos?"hero-pos":"hero-neg"}"><div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.1em;font-family:var(--fh)">${D.mo}月 投資可能額</div><div class="hero-val" style="color:${pos?"var(--g)":"var(--r)"}">${Y(tot)}</div></div>`;
+  h+='<div class="checks">';
+  D.accounts.forEach((a,i)=>{h+=`<button class="chk ${a.inTotal?"chk-on":""}" onclick="D.accounts[${i}].inTotal=!D.accounts[${i}].inTotal;save();render()">${a.inTotal?"✓ ":""}${esc(a.name.split(" ")[0])}</button>`;});
+  h+='</div>';
+  cs.forEach(({a,c})=>{
+    const p=c.inv>=0,fl=F(c.inv);
+    const rc=(a.cardIds||[]).map(k=>{const cd=D.cards.find(x=>x.id===k);return{label:cd?cd.label:k,amt:crds[k]||0};});
+    h+=`<div class="pnl${a.inTotal?"":" fade"}">`;
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="display:flex;align-items:center;gap:7px"><div style="width:3px;height:20px;border-radius:2px;background:${p?"var(--g)":"var(--r)"}"></div><span style="font-size:13px;font-weight:700;color:#eee;font-family:var(--fh)">${esc(a.name)}</span></div><div style="text-align:right"><div style="font-size:19px;font-weight:800;color:${p?"var(--g)":"var(--r)"};font-family:var(--fh)">${Y(fl)}</div><div style="font-size:9px;color:rgba(255,255,255,.2);font-family:var(--fh)">${Y(c.inv)}</div></div></div>`;
+    h+=rw("残高",Y(c.b),"bld");
+    rc.forEach(x=>h+=rw("− "+x.label,Y(x.amt),"dim"));
+    (a.fc||[]).forEach(f=>h+=rw("− "+f.l,Y(f.a),"dim"));
+    if(c.st>0)h+=rw("− 季節加算",Y(c.st),"wrn");
+    (a.fi||[]).forEach(f=>h+=rw("+ "+f.l,Y(f.a),"pls"));
+    h+=rw("− 生活防衛資金",Y(a.ef||0),"dim");
+    h+='</div>';
+  });
+  if(rawText){h+=`<details style="margin-top:10px"><summary style="font-size:10px;color:rgba(255,255,255,.2);cursor:pointer">取得テキスト（${rawText.length}文字）</summary><pre style="font-size:9px;color:rgba(255,255,255,.15);white-space:pre-wrap;margin-top:4px;padding:10px;background:var(--card);border-radius:8px">${esc(rawText)}</pre></details>`;}
+  h+=`<button class="main-btn" style="margin-top:14px;background:var(--card);box-shadow:none;border:1px solid var(--bdr);color:rgba(255,255,255,.4)" onclick="resetCalc()">再計算する</button>`;
+  $("results").innerHTML=h;$("results").classList.remove("hidden");$("results").style.animation="fu .3s";
+}
+function rw(l,v,c){return`<div class="row"><span class="rl ${c}">${l}</span><span class="rv ${c}">${v}</span></div>`;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function resetCalc(){parsed=null;rawText="";closeAll();$("results").classList.add("hidden");showInitView();$("pasteBox").innerText="";}
+
+// ===== AUTO-LOAD =====
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  
+  // Method 1: ?text=ENCODED_TEXT (direct text in URL)
+  const text=params.get("text");
+  if(text&&text.trim().length>10){
+    doCalc(text);
+    try{history.replaceState(null,"",window.location.pathname);}catch{}
+    return;
+  }
+  
+  // Method 2: ?autopaste=1 (read from clipboard automatically)
+  if(params.get("autopaste")==="1"){
+    // Clean URL first
+    try{history.replaceState(null,"",window.location.pathname);}catch{}
+    
+    // Try clipboard read methods with slight delay to ensure page is ready
+    setTimeout(async()=>{
+      // Try clipboard.read() for rich text first
+      try{
+        const items=await navigator.clipboard.read();
+        let ft="";
+        for(const item of items){
+          if(item.types.includes("text/html")){
+            const b=await item.getType("text/html");
+            ft=(await b.text()).replace(/<br\s*\/?>/gi,"\n").replace(/<\/[dp]>/gi,"\n").replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ");
+          }else if(item.types.includes("text/plain")){
+            const b=await item.getType("text/plain");
+            ft=await b.text();
+          }
+        }
+        if(ft&&ft.trim().length>20){doCalc(ft);return;}
+      }catch{}
+      
+      // Fallback: readText
+      try{
+        const t=await navigator.clipboard.readText();
+        if(t&&t.trim().length>20){doCalc(t);return;}
+      }catch{}
+      
+      showErr("クリップボードの自動読取に失敗しました。📋ペーストボタンをお使いください。");
+    },300);
+  }
+})();
+</script>
+</body>
+</html>

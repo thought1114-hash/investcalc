@@ -291,6 +291,11 @@ function renderSettings(){
   h+=`<button class="madd" onclick="addCard()">+ カードを追加</button>`;
 
   h+=`<div style="display:flex;gap:8px;margin-top:16px"><button class="mpbtn mpbtn-s" onclick="closeSettings()">キャンセル</button><button class="mpbtn mpbtn-p" onclick="saveS()">保存</button></div>`;
+  h+=`<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bdr)">`;
+  h+=`<div style="font-size:11px;color:rgba(255,255,255,.3);font-weight:600;margin-bottom:8px">設定のインポート / エクスポート</div>`;
+  h+=`<div style="display:flex;gap:6px;margin-bottom:8px"><button class="mpbtn mpbtn-s" style="font-size:11px;padding:8px" onclick="exportS()">📤 エクスポート</button><button class="mpbtn mpbtn-s" style="font-size:11px;padding:8px" onclick="showImport()">📥 インポート</button></div>`;
+  h+=`<div id="importArea" class="hidden"><textarea id="importText" style="width:100%;height:80px;padding:8px;background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:8px;color:#fff;font-size:10px;font-family:monospace;outline:none;resize:none" placeholder="JSONテキストを貼り付け"></textarea><button class="mpbtn mpbtn-p" style="font-size:11px;padding:8px;margin-top:6px;width:100%" onclick="importS()">インポート実行</button></div>`;
+  h+=`</div>`;
   h+=`<button style="width:100%;margin-top:10px;padding:9px;background:none;border:1px solid rgba(239,68,68,.12);border-radius:8px;color:rgba(239,68,68,.4);font-size:11px;cursor:pointer" onclick="resetS()">全設定をデフォルトに戻す</button>`;
   $("settingsBody").innerHTML=h;
 }
@@ -299,6 +304,22 @@ function addAcc(){const id="acc_"+Date.now();tmpD.accounts.push({id,name:"新し
 function delAcc(i){if(confirm(tmpD.accounts[i].name+"を削除しますか？")){tmpD.accounts.splice(i,1);renderSettings();}}
 function addCard(){const id="card_"+Date.now();tmpD.cards.push({id,label:"新しいカード",pats:[]});renderSettings();}
 function delCard(i){const cid=tmpD.cards[i].id;tmpD.accounts.forEach(a=>a.cardIds=(a.cardIds||[]).filter(x=>x!==cid));tmpD.cards.splice(i,1);renderSettings();}
+function exportS(){
+  const json=JSON.stringify({accounts:tmpD.accounts,cards:tmpD.cards},null,2);
+  const ta=document.createElement("textarea");ta.value=json;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
+  alert("設定をクリップボードにコピーしました");
+}
+function showImport(){$("importArea").classList.toggle("hidden");}
+function importS(){
+  try{
+    const text=$("importText").value.trim();
+    const data=JSON.parse(text);
+    if(!data.accounts||!data.cards)throw new Error("accounts/cardsが見つかりません");
+    tmpD.accounts=data.accounts;tmpD.cards=data.cards;
+    renderSettings();
+    alert("インポートしました。「保存」を押して確定してください。");
+  }catch(e){alert("インポート失敗: "+e.message);}
+}
 
 // ===== RENDER =====
 function render(){

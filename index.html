@@ -369,48 +369,57 @@ function resetCalc(){parsed=null;rawText="";closeAll();$("results").classList.ad
 
 // ===== AUTO-LOAD =====
 (function(){
-  const params=new URLSearchParams(window.location.search);
-  
-  // Method 1: ?text=ENCODED_TEXT (direct text in URL)
-  const text=params.get("text");
-  if(text&&text.trim().length>10){
-    doCalc(text);
-    try{history.replaceState(null,"",window.location.pathname);}catch{}
-    return;
-  }
-  
-  // Method 2: ?autopaste=1 (read from clipboard automatically)
-  if(params.get("autopaste")==="1"){
-    // Clean URL first
-    try{history.replaceState(null,"",window.location.pathname);}catch{}
+  var loaded=false;
+  try{
+    var params=new URLSearchParams(window.location.search);
     
-    // Try clipboard read methods with slight delay to ensure page is ready
-    setTimeout(async()=>{
-      // Try clipboard.read() for rich text first
+    // Method A: ?b64=BASE64_ENCODED_TEXT (safest, no special char issues)
+    var b64=params.get("b64");
+    if(b64&&b64.length>10){
       try{
-        const items=await navigator.clipboard.read();
-        let ft="";
-        for(const item of items){
-          if(item.types.includes("text/html")){
-            const b=await item.getType("text/html");
-            ft=(await b.text()).replace(/<br\s*\/?>/gi,"\n").replace(/<\/[dp]>/gi,"\n").replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&nbsp;/g," ");
-          }else if(item.types.includes("text/plain")){
-            const b=await item.getType("text/plain");
-            ft=await b.text();
-          }
-        }
-        if(ft&&ft.trim().length>20){doCalc(ft);return;}
-      }catch{}
-      
-      // Fallback: readText
-      try{
-        const t=await navigator.clipboard.readText();
-        if(t&&t.trim().length>20){doCalc(t);return;}
-      }catch{}
-      
-      showErr("クリップボードの自動読取に失敗しました。📋ペーストボタンをお使いください。");
-    },300);
-  }
+        var text=decodeURIComponent(escape(atob(b64)));
+        if(text&&text.trim().length>10){setTimeout(function(){doCalc(text);},100);loaded=true;}
+      }catch(e1){
+        // Try without UTF-8 decode
+        try{var text2=atob(b64);if(text2&&text2.trim().length>10){setTimeout(function(){doCalc(text2);},100);loaded=true;}}catch(e1b){}
+      }
+    }
+    
+    // Method B: hash fragment #ENCODED_TEXT
+    if(!loaded){
+      var hash=window.location.hash;
+      if(hash&&hash.length>10){
+        var htext="";
+        try{htext=decodeURIComponent(hash.slice(1));}catch(e2){htext=hash.slice(1).replace(/%20/g," ");}
+        if(htext&&htext.trim().length>10){setTimeout(function(){doCalc(htext);},100);loaded=true;}
+      }
+    }
+    
+    // Method C: ?text=URL_ENCODED_TEXT
+    if(!loaded){
+      var qtext=params.get("text");
+      if(qtext&&qtext.trim().length>10){setTimeout(function(){doCalc(qtext);},100);loaded=true;}
+    }
+    
+    // Clean URL
+    if(loaded){try{history.replaceState(null,"",window.location.pathname);}catch(e3){}}
+    
+    // Method D: ?autopaste=1 → tap to read clipboard
+    if(!loaded&&params.get("autopaste")==="1"){
+      try{history.replaceState(null,"",window.location.pathname);}catch(e4){}
+      document.querySelectorAll('.wrap > *').forEach(function(el){el.style.display='none';});
+      var ov=document.createElement('div');
+      ov.style.cssText='position:fixed;inset:0;background:#090b10;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:40px;';
+      ov.innerHTML='<div style="font-size:60px;margin-bottom:20px">📊</div><h2 style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--g);margin-bottom:8px">InvestCalc</h2><p style="font-size:13px;color:rgba(255,255,255,.35);margin-bottom:30px;text-align:center">OCRテキストがクリップボードにあります</p><button id="autoCalcBtn" style="width:100%;max-width:320px;padding:22px;border-radius:18px;border:none;background:linear-gradient(135deg,#059669,#047857);color:#fff;font-size:20px;font-weight:800;font-family:var(--fh);cursor:pointer;box-shadow:0 8px 32px rgba(16,185,129,.3)">タップして計算</button>';
+      document.body.appendChild(ov);
+      document.getElementById('autoCalcBtn').onclick=async function(){
+        this.textContent='読み取り中...';this.disabled=true;
+        var ok=false;
+        try{var t=await navigator.clipboard.readText();if(t&&t.trim().length>20){ok=true;ov.remove();document.querySelectorAll('.wrap > *').forEach(function(el){el.style.display='';});doCalc(t);}}catch(e5){}
+        if(!ok){ov.remove();document.querySelectorAll('.wrap > *').forEach(function(el){el.style.display='';});showErr("クリップボードの読取に失敗しました。📋ペーストボタンをお使いください。");}
+      };
+    }
+  }catch(e){console.error("Auto-load error:",e);}
 })();
 </script>
 </body>

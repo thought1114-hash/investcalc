@@ -371,32 +371,28 @@ function resetCalc(){parsed=null;rawText="";closeAll();$("results").classList.ad
 (function(){
   var loaded=false;
   try{
-    var params=new URLSearchParams(window.location.search);
-    
-    // Method A: ?b64=BASE64_ENCODED_TEXT (safest, no special char issues)
-    var b64=params.get("b64");
-    if(b64&&b64.length>10){
+    // Method A: #BASE64_TEXT (hash fragment - NOT sent to server, no length limit)
+    var hash=window.location.hash;
+    if(hash&&hash.length>10){
+      var raw=hash.slice(1); // remove #
+      // Try Base64 decode
       try{
-        var text=decodeURIComponent(escape(atob(b64)));
+        var text=decodeURIComponent(escape(atob(raw)));
         if(text&&text.trim().length>10){setTimeout(function(){doCalc(text);},100);loaded=true;}
       }catch(e1){
-        // Try without UTF-8 decode
-        try{var text2=atob(b64);if(text2&&text2.trim().length>10){setTimeout(function(){doCalc(text2);},100);loaded=true;}}catch(e1b){}
+        try{var text2=atob(raw);if(text2&&text2.trim().length>10){setTimeout(function(){doCalc(text2);},100);loaded=true;}}catch(e1b){
+          // Not base64 - try as URL-encoded text
+          try{var text3=decodeURIComponent(raw);if(text3&&text3.trim().length>10){setTimeout(function(){doCalc(text3);},100);loaded=true;}}catch(e1c){
+            // Raw text
+            if(raw.trim().length>10){setTimeout(function(){doCalc(raw);},100);loaded=true;}
+          }
+        }
       }
     }
     
-    // Method B: hash fragment #ENCODED_TEXT
+    // Method B: ?text= query param (fallback)
     if(!loaded){
-      var hash=window.location.hash;
-      if(hash&&hash.length>10){
-        var htext="";
-        try{htext=decodeURIComponent(hash.slice(1));}catch(e2){htext=hash.slice(1).replace(/%20/g," ");}
-        if(htext&&htext.trim().length>10){setTimeout(function(){doCalc(htext);},100);loaded=true;}
-      }
-    }
-    
-    // Method C: ?text=URL_ENCODED_TEXT
-    if(!loaded){
+      var params=new URLSearchParams(window.location.search);
       var qtext=params.get("text");
       if(qtext&&qtext.trim().length>10){setTimeout(function(){doCalc(qtext);},100);loaded=true;}
     }

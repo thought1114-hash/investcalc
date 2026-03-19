@@ -80,11 +80,11 @@ select,button{font-family:var(--fb)}
   </div>
   <div id="errBox" class="hidden"></div>
   <div id="ocrPanel" class="panel hidden">
-    <p style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:8px">Zaimのスクショを選択（1枚ずつでもOK）</p>
-    <input type="file" id="ocrFile" accept="image/*" multiple style="display:none">
-    <button id="ocrBtn" class="gbtn" style="margin-top:0;background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="$('ocrFile').click()">写真を選択してOCR実行</button>
-    <button style="width:100%;margin-top:6px;padding:8px;background:none;border:1px solid var(--bdr);border-radius:8px;color:rgba(255,255,255,.25);font-size:10px;cursor:pointer" onclick="ocrBuffer='';$('ocrBtn').textContent='写真を選択してOCR実行'">OCRリセット</button>
-    <p style="font-size:9px;color:rgba(255,255,255,.12);margin-top:6px;text-align:center">1枚選択→OCR→もう1枚選択→OCR→自動計算</p>
+    <p style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:10px">残高画面と引落予定画面のスクショ2枚を選択</p>
+    <input type="file" id="ocrFileAll" accept="image/*" multiple style="display:none">
+    <button id="ocrBtnAll" class="gbtn" style="margin-top:0;background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="$('ocrFileAll').click()">📸 スクショ2枚を選択してOCR</button>
+    <div id="ocrStatus" style="font-size:11px;color:rgba(255,255,255,.25);margin-top:8px"></div>
+    <button style="width:100%;margin-top:6px;padding:8px;background:none;border:1px solid var(--bdr);border-radius:8px;color:rgba(255,255,255,.25);font-size:10px;cursor:pointer" onclick="resetOcr()">OCRリセット</button>
   </div>
   <div id="pastePanel" class="panel hidden">
     <div id="pasteBox" class="ce" contenteditable="true"></div>
@@ -206,48 +206,41 @@ function extr(){const el=$("pasteBox");let t="";const w=n=>{if(n.nodeType===3)t+
 function doPasteCalc(){if(!doCalc(extr()))showErr("テキストが短すぎます");}
 
 // ===== OCR (Tesseract.js) =====
-let ocrBuffer="";
-$("ocrFile").onchange=async function(e){
-  if(!e.target.files||!e.target.files.length)return;
-  const btn=$("ocrBtn");
-  const fileCount=e.target.files.length;
-  btn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>OCR処理中（'+fileCount+'枚）...';
+async function loadTesseract(){
+  if(!window.Tesseract){
+    await new Promise((r,j)=>{
+      const s=document.createElement("script");
+      s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+      s.onload=r;s.onerror=()=>j(new Error("OCRライブラリの読み込みに失敗しました"));
+      document.head.appendChild(s);
+    });
+  }
+}
+$("ocrFileAll").onchange=async function(e){
+  const files=Array.from(e.target.files||[]);
+  if(!files.length)return;
+  const btn=$("ocrBtnAll");
+  const total=files.length;
   btn.disabled=true;$("errBox").classList.add("hidden");
+  $("ocrStatus").textContent="";
   try{
-    if(!window.Tesseract){
-      await new Promise((r,j)=>{
-        const s=document.createElement("script");
-        s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-        s.onload=r;
-        s.onerror=()=>j(new Error("OCRライブラリの読み込みに失敗しました"));
-        document.head.appendChild(s);
-      });
+    await loadTesseract();
+    let allText="";
+    for(let i=0;i<files.length;i++){
+      btn.innerHTML='<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px"></span>OCR処理中 '+(i+1)+'/'+total+'枚...';
+      $("ocrStatus").textContent=(i+1)+"/"+total+"枚を処理中...";
+      const res=await Tesseract.recognize(files[i],"jpn");
+      allText+=res.data.text+"\n";
     }
-    let newText="";
-    for(const f of e.target.files){
-      const res=await Tesseract.recognize(f,"jpn");
-      newText+=res.data.text+"\n";
-    }
-    ocrBuffer+=newText;
-    // Check if we have both accounts and cards
-    const test=parseOcr(ocrBuffer);
-    const hasAcc=Object.keys(test.accounts).length>0;
-    const hasCards=Object.keys(test.cards).length>0;
-    if(hasAcc&&hasCards){
-      doCalc(ocrBuffer);
-      ocrBuffer="";
-      btn.textContent="写真を選択してOCR実行";
-    }else{
-      const got=hasAcc?"残高":hasCards?"引落予定":"データ";
-      btn.textContent="📷 "+got+"を取得済み。もう1枚選択";
-      btn.disabled=false;
-      showErr(got+"を読み取りました。もう1枚のスクショを選択してください。");
-      e.target.value="";
-      return;
-    }
-  }catch(err){showErr(err.message);ocrBuffer="";}
-  finally{btn.disabled=false;e.target.value="";}
+    $("ocrStatus").textContent=total+"枚のOCR完了";
+    doCalc(allText);
+  }catch(err){showErr(err.message);}
+  finally{btn.innerHTML="📸 スクショ2枚を選択してOCR";btn.disabled=false;e.target.value="";}
 };
+function resetOcr(){
+  $("ocrBtnAll").innerHTML="📸 スクショ2枚を選択してOCR";
+  $("ocrStatus").textContent="";
+}
 
 // ===== MANUAL =====
 function buildManual(){

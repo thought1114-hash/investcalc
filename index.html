@@ -371,32 +371,23 @@ function resetCalc(){parsed=null;rawText="";closeAll();$("results").classList.ad
 (function(){
   var loaded=false;
   try{
-    // Method A: #BASE64_TEXT (hash fragment - NOT sent to server, no length limit)
-    var hash=window.location.hash;
-    if(hash&&hash.length>10){
-      var raw=hash.slice(1); // remove #
-      // URL-decode first (shortcuts may URL-encode the base64)
-      try{raw=decodeURIComponent(raw);}catch(ed){}
-      // Remove any whitespace/newlines that crept in
-      raw=raw.replace(/[\s\n\r]/g,"");
-      // Try Base64 decode (UTF-8)
-      try{
-        var binStr=atob(raw);
-        // Decode UTF-8 bytes
-        var bytes=new Uint8Array(binStr.length);
-        for(var i=0;i<binStr.length;i++)bytes[i]=binStr.charCodeAt(i);
-        var text=new TextDecoder("utf-8").decode(bytes);
-        if(text&&text.trim().length>10){
-          setTimeout(function(){doCalc(text);},100);loaded=true;
+    // Method A: #TEXT (URL-encoded)
+    var hash = window.location.hash;
+    if (hash && hash.length > 1) {
+      try {
+        var text = decodeURIComponent(hash.slice(1)); // ←これだけでOK
+    
+        if (text && text.trim().length > 10) {
+          setTimeout(function () {
+            doCalc(text);
+          }, 100);
+          loaded = true;
         }
-      }catch(e1){
-        // Simple atob fallback
-        try{
-          var text2=atob(raw);
-          if(text2&&text2.trim().length>10){setTimeout(function(){doCalc(text2);},100);loaded=true;}
-        }catch(e1b){}
+      } catch (e) {
+        console.error("Hash decode error:", e);
       }
     }
+
     
     // Method B: ?text= query param (fallback)
     if(!loaded){
